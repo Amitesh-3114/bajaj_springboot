@@ -27,30 +27,55 @@ public class QualiferApplication implements CommandLineRunner {
 		Map<String, String> requestBody = new HashMap<>();
 		requestBody.put("name", "Amitesh Bhaskar");
 		requestBody.put("regNo", "1RF22CS013");
-		requestBody.put("email", "amiteshbhaskar1@gmail.com");
+		requestBody.put("email", "rvit22bcs065.rvitm@rvei.edu.in");
 
 		// Headers
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		// Combine body + headers
 		HttpEntity<Map<String, String>> entity = new HttpEntity<>(requestBody, headers);
 
 		try {
-			// Send POST request and get response as Map
-			ResponseEntity<Map> response =
-					restTemplate.postForEntity(url, entity, Map.class);
+			ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
 			if (response.getBody() != null) {
-				String webhook = (String) response.getBody().get("webhook");
+				// Extract from Step 1 response
+				String webhook = (String) response.getBody().get("webhook"); // ✅ dynamic URL
 				String accessToken = (String) response.getBody().get("accessToken");
 
-				System.out.println("✅ Webhook: " + webhook);
-				System.out.println("✅ Access Token: " + accessToken);
-			} else {
-				System.out.println("❌ No response body received!");
-			}
+// SQL query
+				String finalQuery =
+						"SELECT p.AMOUNT AS SALARY, " +
+								"CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS NAME, " +
+								"TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS AGE, " +
+								"d.DEPARTMENT_NAME " +
+								"FROM PAYMENTS p " +
+								"JOIN EMPLOYEE e ON p.EMP_ID = e.EMP_ID " +
+								"JOIN DEPARTMENT d ON e.DEPARTMENT = d.DEPARTMENT_ID " +
+								"WHERE DAY(p.PAYMENT_TIME) <> 1 " +
+								"ORDER BY p.AMOUNT DESC " +
+								"LIMIT 1;";
 
+// Headers (⚠️ no "Bearer ", just raw token as assignment shows)
+				HttpHeaders submitHeaders = new HttpHeaders();
+				submitHeaders.set("Authorization", accessToken);
+				submitHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+// Body
+				Map<String, String> submitBody = new HashMap<>();
+				submitBody.put("finalQuery", finalQuery);
+
+				HttpEntity<Map<String, String>> submitEntity = new HttpEntity<>(submitBody, submitHeaders);
+
+// ✅ Post to the dynamic webhook
+				ResponseEntity<String> submitResponse =
+						restTemplate.postForEntity(webhook, submitEntity, String.class);
+
+				System.out.println("✅ Submission Response: " + submitResponse.getBody());
+
+			} else {
+				System.out.println("❌ Failed to get accessToken.");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

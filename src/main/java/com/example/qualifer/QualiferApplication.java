@@ -40,10 +40,10 @@ public class QualiferApplication implements CommandLineRunner {
 
 			if (response.getBody() != null) {
 				// Extract from Step 1 response
-				String webhook = (String) response.getBody().get("webhook"); // ✅ dynamic URL
+				String webhook = (String) response.getBody().get("webhook");
 				String accessToken = (String) response.getBody().get("accessToken");
 
-// SQL query
+
 				String finalQuery =
 						"SELECT p.AMOUNT AS SALARY, " +
 								"CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS NAME, " +
@@ -56,18 +56,18 @@ public class QualiferApplication implements CommandLineRunner {
 								"ORDER BY p.AMOUNT DESC " +
 								"LIMIT 1;";
 
-// Headers (⚠️ no "Bearer ", just raw token as assignment shows)
+
 				HttpHeaders submitHeaders = new HttpHeaders();
 				submitHeaders.set("Authorization", accessToken);
 				submitHeaders.setContentType(MediaType.APPLICATION_JSON);
 
-// Body
+
 				Map<String, String> submitBody = new HashMap<>();
 				submitBody.put("finalQuery", finalQuery);
 
 				HttpEntity<Map<String, String>> submitEntity = new HttpEntity<>(submitBody, submitHeaders);
 
-// ✅ Post to the dynamic webhook
+
 				ResponseEntity<String> submitResponse =
 						restTemplate.postForEntity(webhook, submitEntity, String.class);
 
